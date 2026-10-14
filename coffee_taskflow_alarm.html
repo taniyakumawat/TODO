@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brew Tasks & Alarms - Coffee Edition</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Playfair Display for headers & Inter for body -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,400&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        espresso: {
+                            900: '#1A0F0C',
+                            800: '#2B1B17',
+                            700: '#3D2314',
+                            600: '#4A2E1B'
+                        },
+                        roast: {
+                            500: '#5C3A21',
+                            400: '#7A4E2C',
+                            300: '#99633B'
+                        },
+                        caramel: {
+                            500: '#C68B59',
+                            400: '#D99B6A',
+                            300: '#E7B083'
+                        },
+                        latte: {
+                            300: '#CBB299',
+                            200: '#D7B999',
+                            100: '#E8D5C4',
+                            50: '#F5ECE1'
+                        },
+                        cream: {
+                            100: '#EFE3D3',
+                            50: '#FDFBF7'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        serif: ['Playfair Display', 'serif']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Custom scrollbars with coffee tones */
+        ::-webkit-scrollbar {
+            width: 7px;
+            height: 7px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #EFE3D3;
+        }
+        .dark ::-webkit-scrollbar-track {
+            background: #1A0F0C;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #C68B59;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #5C3A21;
+        }
+
+        /* Glassmorphism coffee cards */
+        .coffee-glass {
+            background: rgba(253, 251, 247, 0.75);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(215, 185, 153, 0.35);
+        }
+        .dark .coffee-glass {
+            background: rgba(43, 27, 23, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(92, 58, 33, 0.4);
+        }
+
+        /* Animated Steam Effect */
+        .steam-container {
+            position: relative;
+            display: inline-block;
+        }
+        .steam {
+            position: absolute;
+            top: -12px;
+            width: 4px;
+            height: 12px;
+            background: rgba(198, 139, 89, 0.6);
+            border-radius: 50%;
+            animation: rise 2s infinite ease-in-out;
+            opacity: 0;
+            filter: blur(1px);
+        }
+        .steam-1 { left: 6px; animation-delay: 0s; }
+        .steam-2 { left: 14px; animation-delay: 0.6s; }
+        .steam-3 { left: 22px; animation-delay: 1.2s; }
+
+        @keyframes rise {
+            0% { transform: translateY(0) scaleX(1); opacity: 0; }
+            50% { opacity: 0.7; }
+            100% { transform: translateY(-16px) scaleX(2.5); opacity: 0; }
+        }
+
+        /* Pulsing Alarm Glow */
+        @keyframes alarmPulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(198, 139, 89, 0.7); }
+            50% { box-shadow: 0 0 25px 8px rgba(198, 139, 89, 0.9); }
+        }
+        .alarm-active-ring {
+            animation: alarmPulse 1.2s infinite;
+        }
+    </style>
+</head>
+
+<body class="h-full bg-cream-50 text-espresso-800 dark:bg-espresso-900 dark:text-cream-100 font-sans transition-colors duration-300 flex flex-col justify-between min-h-screen">
+
+    <!-- Top Navigation & Real-time Live Header -->
+    <header class="w-full bg-latte-50/80 dark:bg-espresso-800/80 border-b border-latte-200 dark:border-espresso-700 sticky top-0 z-30 backdrop-blur-md shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
+            
+            <!-- Logo & Greeting -->
+            <div class="flex items-center space-x-4">
+                <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-espresso-700 to-roast-500 text-cream-50 flex items-center justify-center shadow-lg shadow-espresso-800/20 relative">
+                    <div class="steam-container">
+                        <span class="steam steam-1"></span>
+                        <span class="steam steam-2"></span>
+                        <span class="steam steam-3"></span>
+                        <i class="fa-solid fa-mug-hot text-xl"></i>
+                    </div>
+                </div>
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-serif font-bold tracking-tight text-espresso-800 dark:text-latte-100">
+                        Café TaskFlow
+                    </h1>
+                    <p id="live-greeting" class="text-xs sm:text-sm text-roast-500 dark:text-latte-300 font-medium italic">
+                        Good day! Ready for a fresh brew? ☕
+                    </p>
+                </div>
+            </div>
+
+            <!-- Live Digital Clock & Calendar Info Widget -->
+            <div class="flex items-center space-x-4 sm:space-x-6 bg-cream-100/80 dark:bg-espresso-700/60 px-4 py-2.5 rounded-2xl border border-latte-200 dark:border-roast-500/40">
+                <div class="text-right">
+                    <div id="live-clock" class="text-lg sm:text-xl font-bold font-mono text-espresso-800 dark:text-caramel-300 tracking-wider">
+                        00:00:00 AM
+                    </div>
+                    <div id="live-date" class="text-xs text-roast-500 dark:text-latte-200 font-medium">
+                        Loading Date...
+                    </div>
+                </div>
+                <div class="h-8 w-px bg-latte-300 dark:bg-espresso-600"></div>
+                <!-- Theme Mode Toggle Button -->
+                <button id="theme-toggle-btn" class="p-2.5 rounded-xl bg-latte-200 dark:bg-espresso-600 text-espresso-800 dark:text-caramel-300 hover:bg-caramel-500 hover:text-white dark:hover:bg-caramel-500 transition cursor-pointer" title="Toggle Light/Dark Theme">
+                    <i id="theme-icon" class="fa-solid fa-moon text-base"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-grow w-full">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            
+            <aside class="lg:col-span-4 flex flex-col gap-6">
+                
+                <!-- Quick Navigation Tabs -->
+                <div class="coffee-glass p-2 rounded-2xl flex items-center justify-between shadow-md">
+                    <button id="nav-tasks-btn" class="flex-1 py-2.5 rounded-xl font-semibold text-xs sm:text-sm transition flex items-center justify-center space-x-2 bg-roast-500 text-white shadow">
+                        <i class="fa-solid fa-list-check"></i>
+                        <span>Tasks</span>
+                    </button>
+                    <button id="nav-alarms-btn" class="flex-1 py-2.5 rounded-xl font-semibold text-xs sm:text-sm transition flex items-center justify-center space-x-2 text-roast-500 dark:text-latte-200 hover:bg-latte-100 dark:hover:bg-espresso-700">
+                        <i class="fa-solid fa-clock font-bold"></i>
+                        <span>Alarms (<span id="alarm-count-badge">0</span>)</span>
+                    </button>
+                </div>
+
+                <!-- Live Month & Year Calendar Widget -->
+                <div class="coffee-glass p-5 rounded-2xl shadow-lg">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 id="calendar-month-year" class="font-serif font-bold text-base sm:text-lg text-espresso-800 dark:text-latte-100 flex items-center gap-2">
+                            <i class="fa-regular fa-calendar-days text-caramel-500"></i>
+                            <span>Month Year</span>
+                        </h2>
+                        <div class="flex space-x-1">
+                            <button id="cal-prev-btn" class="p-1.5 rounded-lg hover:bg-latte-200 dark:hover:bg-espresso-700 text-roast-500 dark:text-latte-200 transition">
+                                <i class="fa-solid fa-chevron-left text-xs"></i>
+                            </button>
+                            <button id="cal-next-btn" class="p-1.5 rounded-lg hover:bg-latte-200 dark:hover:bg-espresso-700 text-roast-500 dark:text-latte-200 transition">
+                                <i class="fa-solid fa-chevron-right text-xs"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Days of Week Header -->
+                    <div class="grid grid-cols-7 gap-1 text-center text-xs font-bold text-roast-400 dark:text-latte-300 mb-2">
+                        <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
+                    </div>
+                    <!-- Calendar Days Grid -->
+                    <div id="calendar-days-grid" class="grid grid-cols-7 gap-1 text-center text-xs">
+                        <!-- Dynamically generated days -->
+                    </div>
+                </div>
+
+                <!-- Task Time Filters -->
+                <div class="coffee-glass p-5 rounded-2xl shadow-lg">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-roast-400 dark:text-latte-300 mb-3">
+                        Task Timing Filters
+                    </h3>
+                    <div class="space-y-1.5" id="timing-filters-container">
+                        <button data-filter="all" class="timing-filter-btn w-full px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center justify-between transition bg-roast-500 text-white">
+                            <span class="flex items-center space-x-2"><i class="fa-solid fa-layer-group"></i><span>All Tasks</span></span>
+                            <span id="count-all" class="px-2 py-0.5 rounded-full bg-white/20 text-xs">0</span>
+                        </button>
+                        <button data-filter="today" class="timing-filter-btn w-full px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center justify-between transition text-espresso-700 dark:text-latte-200 hover:bg-latte-100 dark:hover:bg-espresso-700">
+                            <span class="flex items-center space-x-2"><i class="fa-solid fa-sun text-caramel-500"></i><span>Due Today</span></span>
+                            <span id="count-today" class="px-2 py-0.5 rounded-full bg-latte-200 dark:bg-espresso-600 text-xs">0</span>
+                        </button>
+                        <button data-filter="upcoming" class="timing-filter-btn w-full px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center justify-between transition text-espresso-700 dark:text-latte-200 hover:bg-latte-100 dark:hover:bg-espresso-700">
+                            <span class="flex items-center space-x-2"><i class="fa-solid fa-calendar-plus text-blue-500"></i><span>Upcoming</span></span>
+                            <span id="count-upcoming" class="px-2 py-0.5 rounded-full bg-latte-200 dark:bg-espresso-600 text-xs">0</span>
+                        </button>
+                        <button data-filter="overdue" class="timing-filter-btn w-full px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center justify-between transition text-espresso-700 dark:text-latte-200 hover:bg-latte-100 dark:hover:bg-espresso-700">
+                            <span class="flex items-center space-x-2"><i class="fa-solid fa-triangle-exclamation text-red-500"></i><span>Overdue</span></span>
+                            <span id="count-overdue" class="px-2 py-0.5 rounded-full bg-latte-200 dark:bg-espresso-600 text-xs">0</span>
+                        </button>
+                        <button data-filter="completed" class="timing-filter-btn w-full px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center justify-between transition text-espresso-700 dark:text-latte-200 hover:bg-latte-100 dark:hover:bg-espresso-700">
+                            <span class="flex items-center space-x-2"><i class="fa-solid fa-circle-check text-green-500"></i><span>Completed</span></span>
+                            <span id="count-completed" class="px-2 py-0.5 rounded-full bg-latte-200 dark:bg-espresso-600 text-xs">0</span>
+                        </button>
+                    </div>
+                </div>
+
+            </aside>
+
+            <section class="lg:col-span-8 flex flex-col gap-6">
+
+                <!-- TASKS VIEW SECTION -->
+                <div id="tasks-view-container" class="space-y-6">
+                    
+                    <!-- Task Input Card -->
+                    <div class="coffee-glass p-5 sm:p-6 rounded-2xl shadow-xl border border-latte-200 dark:border-espresso-700">
+                        <h2 class="font-serif font-bold text-lg text-espresso-800 dark:text-latte-100 mb-4 flex items-center space-x-2">
+                            <i class="fa-solid fa-mug-saucer text-caramel-500"></i>
+                            <span>Brew a New Task</span>
+                        </h2>
+
+                        <form id="task-form" class="space-y-4">
+                            <!-- Task Title Input -->
+                            <div>
+                                <input 
+                                    type="text" 
+                                    id="task-title-input" 
+                                    placeholder="Task title (e.g., Complete project proposal & buy coffee beans)" 
+                                    required
+                                    class="w-full px-4 py-3 bg-cream-50 dark:bg-espresso-900 border border-latte-200 dark:border-espresso-700 rounded-xl focus:ring-2 focus:ring-caramel-500 focus:outline-none text-sm text-espresso-800 dark:text-cream-50 placeholder-roast-400 dark:placeholder-latte-300/60"
+                                >
+                            </div>
+
+                            <!-- Task Optional Description -->
+                            <div>
+                                <textarea 
+                                    id="task-desc-input" 
+                                    rows="2" 
+                                    placeholder="Optional notes or details..." 
+                                    class="w-full px-4 py-2.5 bg-cream-50 dark:bg-espresso-900 border border-latte-200 dark:border-espresso-700 rounded-xl focus:ring-2 focus:ring-caramel-500 focus:outline-none text-xs sm:text-sm text-espresso-800 dark:text-cream-50 placeholder-roast-400 dark:placeholder-latte-300/60"
+                                ></textarea>
+                            </div>
+
+                            <!-- Meta Options Grid: Date, Time, Category, Priority -->
+                            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+                                <!-- Target Date -->
+                                <div>
+                                    <label class="block text-xs font-semibold text-roast-500 dark:text-latte-300 mb-1"><i class="fa-regular fa-calendar"></i> Due Date</label>
+                                    <input type="date" id="task-date-input" class="w-full px-3 py-2 bg-cream-50 dark:bg-espresso-900 border border-latte-200 dark:border-espresso-700 rounded-xl text-xs text-espresso-800 dark:text-cream-50 focus:ring-1 focus:ring-caramel-500">
+                                </div>
+                                <!-- Target Time -->
+                                <div>
+                                    <label class="block text-xs font-semibold text-roast-500 dark:text-latte-300 mb-1"><i class="fa-regular fa-clock"></i> Due Time</label>
+                                    <input type="time" id="task-time-input" class="w-full px-3 py-2 bg-cream-50 dark:bg-espresso-900 border border-latte-200 dark:border-espresso-700 rounded-xl text-xs text-espresso-800 dark:text-cream-50 focus:ring-1 focus:ring-caramel-500">
+                                </div>
+                                <!-- Category Tag -->
+                                <div>
+                                    <label class="block text-xs font-semibold text-roast-500 dark:text-latte-300 mb-1"><i class="fa-solid fa-tag"></i> Category</label>
+                                    <select id="task-category-input" class="w-full px-3 py-2 bg-cream-50 dark:bg-espresso-900 border border-latte-200 dark:border-espresso-700 rounded-xl text-xs text-espresso-800 dark:text-cream-50 focus:ring-1 focus:ring-caramel-500">
+                                        <option value="Coffee Break">☕ Coffee Break</option>
+                                        <option value="Work">💼 Work</option>
+                                        <option value="Personal">🏠 Personal</option>
+                                        <option value="Study">📚 Study</option>
+                                        <option value="Health">🌿 Health</option>
+                                    </select>
+                                </div>
+                                <!-- Priority Level -->
+                                <div>
+                                    <label class="block text-xs font-semibold text-roast-500 dark:text-latte-300 mb-1"><i class="fa-solid fa-flag"></i> Priority</label>
+                                    <select id="task-priority-input" class="w-full px-3 py-2 bg-cream-50 dark:bg-espresso-900 border border-latte-200 dark:border-espresso-700 rounded-xl text-xs text-espresso-800 dark:text-cream-50 focus:ring-1 focus:ring-caramel-500">
+                                        <option value="Low">Low Priority</option>
+                                        <option value="Medium" selected>Medium Priority</option>
+                                        <option value="High">High Priority</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Set Alarm Checkbox Option -->
+                            <div class="flex items-center space-x-2 pt-1">
+                                <input type="checkbox" id="task-alarm-checkbox" class="w-4 h-4 rounded border-latte-300 text-caramel-500 focus:ring-caramel-500">
+                                <label for="task-alarm-checkbox" class="text-xs font-medium text-espresso-700 dark:text-latte-200 cursor-pointer flex items-center gap-1.5">
+                                    <i class="fa-solid fa-bell text-caramel-500"></i> Set an automated Alarm / Audio Reminder for this task
+                                </label>
+                            </div>
+
+                            <!-- Form Action Buttons -->
+                            <div class="flex justify-end pt-2 space-x-3">
+                                <button type="reset" class="px-4 py-2.5 rounded-xl border border-latte-200 dark:border-espresso-700 text-xs font-semibold text-roast-500 dark:text-latte-300 hover:bg-latte-100 dark:hover:bg-espresso-700 transition">
+                                    Clear Form
+                                </button>
+                                <button type="submit" class="px-6 py-2.5 rounded-xl bg-gradient-to-r from-roast-500 to-caramel-500 hover:from-roast-400 hover:to-caramel-400 text-white font-semibold text-xs shadow-md shadow-roast-500/20 transition flex items-center space-x-2 cursor-pointer">
+                                    <i class="fa-solid fa-plus"></i>
+                                    <span>Add Task</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Search Bar & Controls -->
+                    <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
+                        <div class="relative w-full sm:w-72">
+                            <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-xs text-roast-400 dark:text-latte-300"></i>
+                            <input 
+                                type="text" 
+                                id="search-input" 
+                                placeholder="Search tasks by title..." 
+                                class="w-full pl-9 pr-4 py-2 bg-white/80 dark:bg-espresso-800/80 border border-latte-200 dark:border-espresso-700 rounded-xl text-xs text-espresso-800 dark:text-cream-50 focus:ring-1 focus:ring-caramel-500 focus:outline-none"
+                            >
+                        </div>
+                        <div class="text-xs text-roast-500 dark:text-latte-300 font-medium">
+                            Showing <span id="showing-task-count">0</span> task(s)
+                        </div>
+                    </div>
+
+                    <!-- Task Items List -->
+                    <div class="coffee-glass rounded-2xl shadow-xl overflow-hidden border border-latte-200 dark:border-espresso-700">
+                        <ul id="task-list-container" class="divide-y divide-latte-200/60 dark:divide-espresso-700/60">
+                            <!-- Dynamic Tasks List -->
+                        </ul>
+
+                        <!-- Empty Task State -->
+                        <div id="empty-task-state" class="p-12 text-center flex flex-col items-center justify-center">
+                            <div class="w-16 h-16 rounded-full bg-latte-100 dark:bg-espresso-700 text-caramel-500 flex items-center justify-center text-2xl mb-3">
+                                <i class="fa-solid fa-mug-hot"></i>
+                            </div>
+                            <h3 class="font-serif font-bold text-base text-espresso-800 dark:text-latte-100">No Tasks Brewing!</h3>
+                            <p class="text-xs text-roast-400 dark:text-latte-300 mt-1 max-w-sm">
+                                Take a sip of coffee, relax, or add a new task using the form above to stay productive.
+                            </p>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div id="alarms-view-container" class="space-y-6 hidden">
+                    
+                    <!-- Standalone Alarm Creation Card -->
+                    <div class="coffee-glass p-5 sm:p-6 rounded-2xl shadow-xl border border-latte-200 dark:border-espresso-700">
+                        <h2 class="font-serif font-bold text-lg text-espresso-800 dark:text-latte-100 mb-4 flex items-center space-x-2">
+                            <i class="fa-solid fa-clock-rotate-left text-caramel-500"></i>
+                            <span>Create Standalone Coffee Alarm</span>
+                        </h2>
+
+                        <form id="standalone-alarm-form" class="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
+                            <div>
+                                <label class="block text-xs font-semibold text-roast-500 dark:text-latte-300 mb-1">Alarm Title</label>
+                                <input type="text" id="alarm-title-input" placeholder="e.g. Fresh Coffee Brewed!" required class="w-full px-3.5 py-2.5 bg-cream-50 dark:bg-espresso-900 border border-latte-200 dark:border-espresso-700 rounded-xl text-xs text-espresso-800 dark:text-cream-50">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-roast-500 dark:text-latte-300 mb-1">Date & Time</label>
+                                <input type="datetime-local" id="alarm-datetime-input" required class="w-full px-3.5 py-2.5 bg-cream-50 dark:bg-espresso-900 border border-latte-200 dark:border-espresso-700 rounded-xl text-xs text-espresso-800 dark:text-cream-50">
+                            </div>
+                            <button type="submit" class="py-2.5 px-4 bg-roast-500 hover:bg-roast-400 text-white rounded-xl text-xs font-semibold shadow-md transition flex items-center justify-center space-x-2">
+                                <i class="fa-solid fa-bell"></i>
+                                <span>Set Alarm</span>
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Alarms List Card -->
+                    <div class="coffee-glass rounded-2xl shadow-xl border border-latte-200 dark:border-espresso-700 overflow-hidden">
+                        <div class="p-4 border-b border-latte-200 dark:border-espresso-700 flex justify-between items-center">
+                            <h3 class="font-serif font-bold text-sm text-espresso-800 dark:text-latte-100">
+                                Active & Scheduled Alarms
+                            </h3>
+                            <button id="test-audio-btn" class="text-xs text-caramel-500 hover:underline font-medium flex items-center gap-1">
+                                <i class="fa-solid fa-volume-high"></i> Test Sound
+                            </button>
+                        </div>
+
+                        <ul id="alarm-list-container" class="divide-y divide-latte-200 dark:divide-espresso-700">
+                            <!-- Dynamic Alarm Items -->
+                        </ul>
+
+                        <div id="empty-alarm-state" class="p-10 text-center flex flex-col items-center justify-center">
+                            <i class="fa-regular fa-bell-slash text-3xl text-roast-400 dark:text-latte-300 mb-2"></i>
+                            <p class="text-xs text-roast-500 dark:text-latte-300">No alarms set. Add a standalone alarm or attach one to your tasks!</p>
+                        </div>
+                    </div>
+
+                </div>
+
+            </section>
+        </div>
+    </main>
+
+    <!-- Alarm Trigger Popup Modal overlay -->
+    <div id="alarm-modal-overlay" class="fixed inset-0 bg-espresso-900/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-cream-50 dark:bg-espresso-800 border-2 border-caramel-500 w-full max-w-md rounded-3xl p-6 sm:p-8 shadow-2xl alarm-active-ring text-center space-y-5">
+            
+            <div class="w-20 h-20 rounded-full bg-gradient-to-tr from-caramel-500 to-roast-500 text-white flex items-center justify-center mx-auto text-3xl animate-bounce shadow-lg">
+                <i class="fa-solid fa-bell"></i>
+            </div>
+
+            <div>
+                <span class="inline-block px-3 py-1 bg-caramel-500/20 text-caramel-500 rounded-full text-xs font-bold uppercase tracking-wider mb-2">
+                    Alarm Ringing!
+                </span>
+                <h3 id="alarm-modal-title" class="font-serif font-bold text-xl sm:text-2xl text-espresso-800 dark:text-latte-100">
+                    Time for a Coffee Break!
+                </h3>
+                <p id="alarm-modal-time" class="text-xs text-roast-500 dark:text-latte-200 mt-1 font-mono">
+                    --:-- --
+                </p>
+            </div>
+
+            <div class="flex flex-col sm:flex-row gap-3 pt-2">
+                <button id="snooze-alarm-btn" class="flex-1 py-3 px-4 rounded-xl border border-caramel-500 text-caramel-500 dark:text-caramel-300 font-semibold text-xs hover:bg-caramel-500 hover:text-white transition">
+                    <i class="fa-solid fa-clock"></i> Snooze (5 Mins)
+                </button>
+                <button id="dismiss-alarm-btn" class="flex-1 py-3 px-4 rounded-xl bg-roast-500 hover:bg-roast-400 text-white font-semibold text-xs shadow-md transition">
+                    <i class="fa-solid fa-xmark"></i> Dismiss
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="w-full bg-latte-100/60 dark:bg-espresso-800/60 border-t border-latte-200 dark:border-espresso-700 py-4 text-center text-xs text-roast-500 dark:text-latte-300">
+        <p>Crafted with Warm Espresso & Coffee Shades ☕ | Live Real-time Task & Alarm Manager</p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            // --- STATE MANAGEMENT ---
+            let tasks = JSON.parse(localStorage.getItem('coffee_tasks')) || [];
+            let alarms = JSON.parse(localStorage.getItem('coffee_alarms')) || [];
+            let activeFilter = 'all';
+            let calendarDate = new Date();
+            let activeRingingAlarm = null;
+            let audioCtx = null;
+
+            // --- DOM ELEMENTS ---
+            const liveClockEl = document.getElementById('live-clock');
+            const liveDateEl = document.getElementById('live-date');
+            const liveGreetingEl = document.getElementById('live-greeting');
+            
+            const themeToggleBtn = document.getElementById('theme-toggle-btn');
+            const themeIcon = document.getElementById('theme-icon');
+
+            const navTasksBtn = document.getElementById('nav-tasks-btn');
+            const navAlarmsBtn = document.getElementById('nav-alarms-btn');
+            const tasksViewContainer = document.getElementById('tasks-view-container');
+            const alarmsViewContainer = document.getElementById('alarms-view-container');
+
+            const calendarMonthYear = document.getElementById('calendar-month-year');
+            const calendarDaysGrid = document.getElementById('calendar-days-grid');
+            const calPrevBtn = document.getElementById('cal-prev-btn');
+            const calNextBtn = document.getElementById('cal-next-btn');
+
+            const taskForm = document.getElementById('task-form');
+            const taskTitleInput = document.getElementById('task-title-input');
+            const taskDescInput = document.getElementById('task-desc-input');
+            const taskDateInput = document.getElementById('task-date-input');
+            const taskTimeInput = document.getElementById('task-time-input');
+            const taskCategoryInput = document.getElementById('task-category-input');
+            const taskPriorityInput = document.getElementById('task-priority-input');
+            const taskAlarmCheckbox = document.getElementById('task-alarm-checkbox');
+            const taskListContainer = document.getElementById('task-list-container');
+            const emptyTaskState = document.getElementById('empty-task-state');
+            const searchInput = document.getElementById('search-input');
+            const showingTaskCount = document.getElementById('showing-task-count');
+
+            const standaloneAlarmForm = document.getElementById('standalone-alarm-form');
+            const alarmTitleInput = document.getElementById('alarm-title-input');
+            const alarmDatetimeInput = document.getElementById('alarm-datetime-input');
+            const alarmListContainer = document.getElementById('alarm-list-container');
+            const emptyAlarmState = document.getElementById('empty-alarm-state');
+            const alarmCountBadge = document.getElementById('alarm-count-badge');
+            const testAudioBtn = document.getElementById('test-audio-btn');
+
+            const alarmModalOverlay = document.getElementById('alarm-modal-overlay');
+            const alarmModalTitle = document.getElementById('alarm-modal-title');
+            const alarmModalTime = document.getElementById('alarm-modal-time');
+            const dismissAlarmBtn = document.getElementById('dismiss-alarm-btn');
+            const snoozeAlarmBtn = document.getElementById('snooze-alarm-btn');
+
+            // --- THEME INITIALIZATION ---
+            const savedTheme = localStorage.getItem('coffee_theme') || 'light';
+            if (savedTheme === 'dark') {
+                document.documentElement.classList.add('dark');
+                themeIcon.className = 'fa-solid fa-sun text-caramel-300';
+            }
+
+            themeToggleBtn.addEventListener('click', () => {
+                if (document.documentElement.classList.contains('dark')) {
+                    document.documentElement.classList.remove('dark');
+                    localStorage.setItem('coffee_theme', 'light');
+                    themeIcon.className = 'fa-solid fa-moon text-espresso-800';
+                } else {
+                    document.documentElement.classList.add('dark');
+                    localStorage.setItem('coffee_theme', 'dark');
+                    themeIcon.className = 'fa-solid fa-sun text-caramel-300';
+                }
+            });
+
+            function updateLiveClock() {
+                const now = new Date();
+                
+                // Clock Time format
+                const hours = now.getHours();
+                const minutes = String(now.getMinutes()).padStart(2, '0');
+                const seconds = String(now.getSeconds()).padStart(2, '0');
+                const ampm = hours >= 12 ? 'PM' : 'AM';
+                const formattedHours = String(hours % 12 || 12).padStart(2, '0');
+                liveClockEl.textContent = `${formattedHours}:${minutes}:${seconds} ${ampm}`;
+
+                // Date Format: Monday, 14 Oct 2026
+                const options = { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' };
+                liveDateEl.textContent = now.toLocaleDateString('en-US', options);
+
+                // Greeting based on time
+                if (hours < 12) {
+                    liveGreetingEl.textContent = "Good Morning! Grab a fresh hot coffee ☕";
+                } else if (hours < 17) {
+                    liveGreetingEl.textContent = "Good Afternoon! Time for an iced espresso 🧊☕";
+                } else {
+                    liveGreetingEl.textContent = "Good Evening! Unwind with a warm latte ☕";
+                }
+
+                // Check active alarms matching current minute
+                checkAlarms(now);
+            }
+
+            setInterval(updateLiveClock, 1000);
+            updateLiveClock();
+
+            // Web Audio API Synthesizer for realistic coffee chime alarm sound
+            function playCoffeeChimeSound() {
+                try {
+                    if (!audioCtx) {
+                        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    }
+                    if (audioCtx.state === 'suspended') {
+                        audioCtx.resume();
+                    }
+
+                    const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+                    notes.forEach((freq, index) => {
+                        const osc = audioCtx.createOscillator();
+                        const gain = audioCtx.createGain();
+
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(freq, audioCtx.currentTime + index * 0.15);
+
+                        gain.gain.setValueAtTime(0, audioCtx.currentTime + index * 0.15);
+                        gain.gain.linearRampToValueAtTime(0.3, audioCtx.currentTime + index * 0.15 + 0.05);
+                        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + index * 0.15 + 0.6);
+
+                        osc.connect(gain);
+                        gain.connect(audioCtx.destination);
+
+                        osc.start(audioCtx.currentTime + index * 0.15);
+                        osc.stop(audioCtx.currentTime + index * 0.15 + 0.7);
+                    });
+                } catch (e) {
+                    console.log("Audio play blocked by browser policy until user interaction.", e);
+                }
+            }
+
+            testAudioBtn.addEventListener('click', () => {
+                playCoffeeChimeSound();
+            });
+
+            function renderCalendar() {
+                const year = calendarDate.getFullYear();
+                const month = calendarDate.getMonth();
+
+                const firstDayIndex = new Date(year, month, 1).getDay();
+                const lastDay = new Date(year, month + 1, 0).getDate();
+
+                const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+                calendarMonthYear.innerHTML = `<i class="fa-regular fa-calendar-days text-caramel-500"></i> ${monthNames[month]} ${year}`;
+
+                calendarDaysGrid.innerHTML = '';
+
+                // Blank slots for start offset
+                for (let i = 0; i < firstDayIndex; i++) {
+                    const emptyDiv = document.createElement('div');
+                    calendarDaysGrid.appendChild(emptyDiv);
+                }
+
+                const today = new Date();
+
+                for (let day = 1; day <= lastDay; day++) {
+                    const dayCell = document.createElement('div');
+                    dayCell.className = "py-1.5 rounded-lg font-medium transition cursor-pointer relative hover:bg-latte-200 dark:hover:bg-espresso-700";
+                    dayCell.textContent = day;
+
+                    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+
+                    // Check if today
+                    if (day === today.getDate() && month === today.getMonth() && year === today.getFullYear()) {
+                        dayCell.classList.add('bg-roast-500', 'text-white', 'font-bold');
+                    }
+
+                    // Check if tasks exist on this date
+                    const hasTasksOnDate = tasks.some(t => t.date === dateStr);
+                    if (hasTasksOnDate && !(day === today.getDate() && month === today.getMonth() && year === today.getFullYear())) {
+                        const dot = document.createElement('span');
+                        dot.className = "w-1.5 h-1.5 bg-caramel-500 rounded-full mx-auto block mt-0.5";
+                        dayCell.appendChild(dot);
+                    }
+
+                    dayCell.addEventListener('click', () => {
+                        taskDateInput.value = dateStr;
+                    });
+
+                    calendarDaysGrid.appendChild(dayCell);
+                }
+            }
+
+            calPrevBtn.addEventListener('click', () => {
+                calendarDate.setMonth(calendarDate.getMonth() - 1);
+                renderCalendar();
+            });
+            calNextBtn.addEventListener('click', () => {
+                calendarDate.setMonth(calendarDate.getMonth() + 1);
+                renderCalendar();
+            });
+
+            function saveTasks() {
+                localStorage.setItem('coffee_tasks', JSON.stringify(tasks));
+                renderTasks();
+                renderCalendar();
+                updateCounts();
+            }
+
+            function saveAlarms() {
+                localStorage.setItem('coffee_alarms', JSON.stringify(alarms));
+                renderAlarms();
+            }
+
+            taskForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const title = taskTitleInput.value.trim();
+                if (!title) return;
+
+                const newTask = {
+                    id: Date.now().toString(),
+                    title: title,
+                    desc: taskDescInput.value.trim(),
+                    date: taskDateInput.value || new Date().toISOString().split('T')[0],
+                    time: taskTimeInput.value || '12:00',
+                    category: taskCategoryInput.value,
+                    priority: taskPriorityInput.value,
+                    completed: false,
+                    hasAlarm: taskAlarmCheckbox.checked
+                };
+
+                tasks.unshift(newTask);
+
+                // If user checked alarm, automatically add to alarms
+                if (newTask.hasAlarm) {
+                    alarms.push({
+                        id: 'alarm-' + newTask.id,
+                        taskId: newTask.id,
+                        title: newTask.title,
+                        datetime: `${newTask.date}T${newTask.time}`,
+                        enabled: true,
+                        triggered: false
+                    });
+                    saveAlarms();
+                }
+
+                saveTasks();
+                taskForm.reset();
+                taskDateInput.value = new Date().toISOString().split('T')[0];
+            });
+
+            function renderTasks() {
+                const searchTerm = searchInput.value.toLowerCase().trim();
+                const todayStr = new Date().toISOString().split('T')[0];
+
+                const filtered = tasks.filter(task => {
+                    const matchesSearch = task.title.toLowerCase().includes(searchTerm) || (task.desc && task.desc.toLowerCase().includes(searchTerm));
+                    
+                    if (!matchesSearch) return false;
+
+                    if (activeFilter === 'today') return task.date === todayStr && !task.completed;
+                    if (activeFilter === 'upcoming') return task.date > todayStr && !task.completed;
+                    if (activeFilter === 'overdue') return task.date < todayStr && !task.completed;
+                    if (activeFilter === 'completed') return task.completed;
+                    return true;
+                });
+
+                showingTaskCount.textContent = filtered.length;
+                taskListContainer.innerHTML = '';
+
+                if (filtered.length === 0) {
+                    emptyTaskState.classList.remove('hidden');
+                } else {
+                    emptyTaskState.classList.add('hidden');
+                }
+
+                filtered.forEach(task => {
+                    const li = document.createElement('li');
+                    li.className = `p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition hover:bg-latte-50/50 dark:hover:bg-espresso-800/40 ${task.completed ? 'opacity-60 bg-latte-100/30 dark:bg-espresso-900/30' : ''}`;
+
+                    // Priority Color Tag
+                    let priorityClass = "bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300";
+                    if (task.priority === 'High') priorityClass = "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300";
+                    if (task.priority === 'Medium') priorityClass = "bg-caramel-500/20 text-roast-500 dark:text-caramel-300";
+
+                    li.innerHTML = `
+                        <div class="flex items-start space-x-3.5 flex-grow min-w-0">
+                            <button onclick="toggleTaskCompletion('${task.id}')" class="mt-0.5 w-5 h-5 rounded-md border-2 flex items-center justify-center transition flex-shrink-0 ${task.completed ? 'bg-roast-500 border-roast-500 text-white' : 'border-latte-300 dark:border-espresso-600 hover:border-caramel-500'}">
+                                <i class="fa-solid fa-check text-xs ${task.completed ? 'block' : 'hidden'}"></i>
+                            </button>
+                            <div class="min-w-0 flex-grow">
+                                <div class="flex items-center space-x-2 flex-wrap gap-y-1">
+                                    <h4 class="text-sm font-semibold text-espresso-800 dark:text-cream-50 ${task.completed ? 'line-through' : ''}">${escapeHtml(task.title)}</h4>
+                                    <span class="text-[10px] px-2 py-0.5 rounded-md font-bold uppercase ${priorityClass}">${task.priority}</span>
+                                    <span class="text-[10px] px-2 py-0.5 rounded-md font-bold bg-latte-200/80 dark:bg-espresso-700 text-roast-500 dark:text-latte-200">${task.category}</span>
+                                </div>
+                                ${task.desc ? `<p class="text-xs text-roast-400 dark:text-latte-300/80 mt-1">${escapeHtml(task.desc)}</p>` : ''}
+                                <div class="flex items-center space-x-3 text-xs text-roast-500 dark:text-latte-300 mt-2 font-medium">
+                                    <span><i class="fa-regular fa-calendar text-caramel-500 mr-1"></i>${task.date}</span>
+                                    <span><i class="fa-regular fa-clock text-caramel-500 mr-1"></i>${task.time}</span>
+                                    ${task.hasAlarm ? '<span class="text-caramel-500"><i class="fa-solid fa-bell mr-1"></i>Alarm On</span>' : ''}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="flex items-center space-x-2 self-end sm:self-center">
+                            <button onclick="deleteTask('${task.id}')" class="p-2 rounded-lg text-roast-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition" title="Delete Task">
+                                <i class="fa-solid fa-trash-can text-xs"></i>
+                            </button>
+                        </div>
+                    `;
+                    taskListContainer.appendChild(li);
+                });
+            }
+
+            function updateCounts() {
+                const todayStr = new Date().toISOString().split('T')[0];
+                document.getElementById('count-all').textContent = tasks.length;
+                document.getElementById('count-today').textContent = tasks.filter(t => t.date === todayStr && !t.completed).length;
+                document.getElementById('count-upcoming').textContent = tasks.filter(t => t.date > todayStr && !t.completed).length;
+                document.getElementById('count-overdue').textContent = tasks.filter(t => t.date < todayStr && !t.completed).length;
+                document.getElementById('count-completed').textContent = tasks.filter(t => t.completed).length;
+            }
+
+            standaloneAlarmForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const title = alarmTitleInput.value.trim();
+                const datetime = alarmDatetimeInput.value;
+
+                if (!title || !datetime) return;
+
+                alarms.push({
+                    id: 'alarm-' + Date.now(),
+                    taskId: null,
+                    title: title,
+                    datetime: datetime,
+                    enabled: true,
+                    triggered: false
+                });
+
+                saveAlarms();
+                standaloneAlarmForm.reset();
+            });
+
+            function renderAlarms() {
+                alarmCountBadge.textContent = alarms.filter(a => a.enabled).length;
+                alarmListContainer.innerHTML = '';
+
+                if (alarms.length === 0) {
+                    emptyAlarmState.classList.remove('hidden');
+                } else {
+                    emptyAlarmState.classList.add('hidden');
+                }
+
+                alarms.forEach((alarm) => {
+                    const li = document.createElement('li');
+                    li.className = "p-4 flex items-center justify-between gap-4 transition hover:bg-latte-50/50 dark:hover:bg-espresso-800/40";
+
+                    const dt = new Date(alarm.datetime);
+                    const formattedDt = dt.toLocaleString([], { dateStyle: 'short', timeStyle: 'short' });
+
+                    li.innerHTML = `
+                        <div class="flex items-center space-x-3">
+                            <div class="w-9 h-9 rounded-xl ${alarm.enabled ? 'bg-caramel-500/20 text-caramel-500' : 'bg-gray-200 text-gray-400'} flex items-center justify-center">
+                                <i class="fa-solid fa-bell text-sm"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-xs sm:text-sm font-semibold text-espresso-800 dark:text-cream-50">${escapeHtml(alarm.title)}</h4>
+                                <p class="text-[11px] text-roast-400 dark:text-latte-300 font-mono">${formattedDt}</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center space-x-3">
+                            <button onclick="toggleAlarm('${alarm.id}')" class="px-3 py-1 rounded-full text-xs font-semibold ${alarm.enabled ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300' : 'bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-400'}">
+                                ${alarm.enabled ? 'ON' : 'OFF'}
+                            </button>
+                            <button onclick="deleteAlarm('${alarm.id}')" class="p-2 text-roast-400 hover:text-red-500 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition">
+                                <i class="fa-solid fa-trash-can text-xs"></i>
+                            </button>
+                        </div>
+                    `;
+                    alarmListContainer.appendChild(li);
+                });
+            }
+
+            function checkAlarms(now) {
+                const nowStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}T${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+                alarms.forEach(alarm => {
+                    if (alarm.enabled && !alarm.triggered && alarm.datetime.startsWith(nowStr)) {
+                        alarm.triggered = true;
+                        triggerAlarmModal(alarm);
+                        saveAlarms();
+                    }
+                });
+            }
+
+            function triggerAlarmModal(alarm) {
+                activeRingingAlarm = alarm;
+                alarmModalTitle.textContent = alarm.title;
+                alarmModalTime.textContent = new Date().toLocaleTimeString();
+                alarmModalOverlay.classList.remove('hidden');
+                
+                // Play audio chime sequence
+                playCoffeeChimeSound();
+                const soundInterval = setInterval(() => {
+                    if (!alarmModalOverlay.classList.contains('hidden')) {
+                        playCoffeeChimeSound();
+                    } else {
+                        clearInterval(soundInterval);
+                    }
+                }, 2000);
+            }
+
+            dismissAlarmBtn.addEventListener('click', () => {
+                alarmModalOverlay.classList.add('hidden');
+                activeRingingAlarm = null;
+            });
+
+            snoozeAlarmBtn.addEventListener('click', () => {
+                if (activeRingingAlarm) {
+                    const snoozedTime = new Date(Date.now() + 5 * 60000);
+                    const formattedSnooze = `${snoozedTime.getFullYear()}-${String(snoozedTime.getMonth() + 1).padStart(2, '0')}-${String(snoozedTime.getDate()).padStart(2, '0')}T${String(snoozedTime.getHours()).padStart(2, '0')}:${String(snoozedTime.getMinutes()).padStart(2, '0')}`;
+
+                    activeRingingAlarm.datetime = formattedSnooze;
+                    activeRingingAlarm.triggered = false;
+                    saveAlarms();
+                }
+                alarmModalOverlay.classList.add('hidden');
+                activeRingingAlarm = null;
+            });
+
+            // Global Functions for inline actions
+            window.toggleTaskCompletion = function(id) {
+                const task = tasks.find(t => t.id === id);
+                if (task) {
+                    task.completed = !task.completed;
+                    saveTasks();
+                }
+            };
+
+            window.deleteTask = function(id) {
+                tasks = tasks.filter(t => t.id !== id);
+                alarms = alarms.filter(a => a.taskId !== id);
+                saveTasks();
+                saveAlarms();
+            };
+
+            window.toggleAlarm = function(id) {
+                const alarm = alarms.find(a => a.id === id);
+                if (alarm) {
+                    alarm.enabled = !alarm.enabled;
+                    saveAlarms();
+                }
+            };
+
+            window.deleteAlarm = function(id) {
+                alarms = alarms.filter(a => a.id !== id);
+                saveAlarms();
+            };
+
+            // Navigation Tabs Event Listeners
+            navTasksBtn.addEventListener('click', () => {
+                navTasksBtn.className = "flex-1 py-2.5 rounded-xl font-semibold text-xs sm:text-sm transition flex items-center justify-center space-x-2 bg-roast-500 text-white shadow";
+                navAlarmsBtn.className = "flex-1 py-2.5 rounded-xl font-semibold text-xs sm:text-sm transition flex items-center justify-center space-x-2 text-roast-500 dark:text-latte-200 hover:bg-latte-100 dark:hover:bg-espresso-700";
+                tasksViewContainer.classList.remove('hidden');
+                alarmsViewContainer.classList.add('hidden');
+            });
+
+            navAlarmsBtn.addEventListener('click', () => {
+                navAlarmsBtn.className = "flex-1 py-2.5 rounded-xl font-semibold text-xs sm:text-sm transition flex items-center justify-center space-x-2 bg-roast-500 text-white shadow";
+                navTasksBtn.className = "flex-1 py-2.5 rounded-xl font-semibold text-xs sm:text-sm transition flex items-center justify-center space-x-2 text-roast-500 dark:text-latte-200 hover:bg-latte-100 dark:hover:bg-espresso-700";
+                alarmsViewContainer.classList.remove('hidden');
+                tasksViewContainer.classList.add('hidden');
+            });
+
+            // Filter Buttons Event Listeners
+            document.querySelectorAll('.timing-filter-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.timing-filter-btn').forEach(b => {
+                        b.className = "timing-filter-btn w-full px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center justify-between transition text-espresso-700 dark:text-latte-200 hover:bg-latte-100 dark:hover:bg-espresso-700";
+                    });
+                    btn.className = "timing-filter-btn w-full px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center justify-between transition bg-roast-500 text-white";
+
+                    activeFilter = btn.getAttribute('data-filter');
+                    renderTasks();
+                });
+            });
+
+            searchInput.addEventListener('input', renderTasks);
+
+            function escapeHtml(str) {
+                return str.replace(/[&<>"']/g, (m) => ({
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#039;'
+                })[m]);
+            }
+
+            // Set default date input to today
+            taskDateInput.value = new Date().toISOString().split('T')[0];
+
+            // Initial Renders
+            renderCalendar();
+            saveTasks();
+            saveAlarms();
+        });
+    </script>
+</body>
+</html>
